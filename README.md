@@ -1,4 +1,4 @@
-# MeshTaichi: A Compiler for Efficient Mesh-based Operations
+# MeshTaichi: A Compiler for Efficient Mesh-based Operations (SIGGRAPH Asia 2022)
 
 *Chang Yu\*, Yi Xu\*, Ye Kuang, Yuanming Hu, Tiantian Liu (\* indicates equal contribution)*
 
@@ -42,8 +42,7 @@ The next step is to define the attributes for each mesh element. The type of a m
                    'w' : ti.f32})
 ```
 
-Once the data types are all defined, users can instantiate a model
-with an external file:
+Once the data types are all defined, users can instantiate a modelwith an external file:
 
 ``` python
 bunny = mesh.build('./bunny.mesh')
@@ -70,7 +69,7 @@ Most mesh-based operations involve not only the attributes of an element, but th
 
 ``` python
 for c in bunny.cells:
-  total_force = c.verts[0].force 3 
+  total_force = c.verts[0].force
   # reference-based access
   for v in c.verts:
     total_force += v.force
@@ -109,7 +108,7 @@ def substep():
     v.pos += dt * v.vel
 ```
 
-#### **Interacting with Non-mesh Datah**
+#### **Interacting with Non-mesh Data**
 
 Recall that we visit all elements in a `mesh-for` using their references, users do not need to bookkeep their corresponding indices. However, there are cases where the indices of elements are wanted. In these cases, we refer users to visit the `id` attribute of an element. We demonstrate an example to export the positions of vertices to an external multi-dimensional array as follows:
 
@@ -123,7 +122,7 @@ def export():
     pos_ex[v.id] = v.pos
 ```
 
-For more details of the usage of our quantization type system, please refer to our paper or see the examples in this repo.
+For more details of the usage of our programming language, please refer to our paper or see the examples in this repo.
 
 We test MeshTaichi on a variety of physically-based simulation and geometry processing applications with both triangle and tetrahedron meshes. MeshTaichi achieves a consistent speedup ranging from 1.4× to 6×, compared to state-of-the-art mesh data structures and compilers.
 
@@ -135,66 +134,41 @@ Install the latest Taichi by:
 python3 -m pip install —U taichi
 ```
 
-### Game of Life (GoL)
+### Mass Spring
 
-![gol_pic](./pics/teaser_gol.jpg)
+![ms_pic](./pics/ms_teaser.jpg)
 
-To reproduce the GOL galaxy:
-```
-cd gol && python3 galaxy.py -a [cpu/cuda] -o output
-```
-We suggest you run the script using GPU (`--arch cuda`). Because to better observe the evolution of metapixels, we set the steps per frame to be 32768 which will take quite a while on CPUs.
-
-To reproduce the super large scale GoL:
-
-1. Download the pattern `quant_sim_meta.rle` from our [Google Drive](https://drive.google.com/file/d/1kCg2fSAlQgy42cGAatVwuvGZd7RlqLF-/view?usp=sharing) and place it in the same folder with `quant_sim.py`
-
-2. Run the code
-```
-python3 quant_sim.py -a [cpu/cuda] -o output
+To reproduce the mass-spring system:
+``` bash
+cd mass_spring && python3 ms.py --model models/armadillo0.1.node [--cpu]
 ```
 
-For more details, please refer to this [documentation](gol/README.md).
+For more details, please refer to this [documentation](mass_spring/README.md).
 
-### MLS-MPM
-![mpm-pic](./pics/mpm-235.jpg)
+### Projective Dynamics
 
-To test our system on hybrid Lagrangian-Eulerian methods where both particles and grids are used, we implemented the Moving Least Squares Material Point Method with G2P2G transfer. The latest version is now maintained at [Taichi Elements](https://github.com/taichi-dev/taichi_elements).
+![pd_pic](./pics/pd_teaser.jpg)
 
-### Eulerian Fluid
-
-![smoke_simulation](./pics/smoke_result.png)
-
-We developed a sparse-grid-based advection-reflection fluid solver to evaluate our system on grid-based physical simulators.
-
-To reproduce the large scale smoke simulation demo, please first change the directory into `eulerain_fluid`, and run:
+To reproduce the projective dynamics:
+``` bash
+cd projective_dynamics && python3 pd.py --model models/deer.1.node [--cpu]
 ```
-python3 run.py --demo [0/1] -o outputs
-```
-Set the arg of `demo` to `0` for the bunny demo and `1` for the flow demo. `-o outputs` means the set the output folder to `outputs`.
 
-For more comparisons of this quantized fluid simulation, please refer to the [documentation](eulerian_fluid/readme.md) of this demo.
+For more details, please refer to this [documentation](projective_dynamics/README.md).
 
-### Microbenchmarks
-To reproduce the experiments of microbenchmarks, please run
+### XPBD Cloth Simulation
 
+![xpbd_pic](./pics/xpbd_teaser.jpg)
+
+To reproduce the XPBD cloth simulation:
+``` bash
+cd xpbd_cloth && python3 models/gen_cloth.py && mkdir results && python3 run_multiple.py --output ./results
 ```
-cd microbenchmarks
-chmod +x run_microbenchmarks.sh
-./run_microbenchmarks.sh
-```
-Please refer to this [Readme](microbenchmarks/README.md) to get more details.
+
+For more details, please refer to this [documentation](xpbd_cloth/README.md).
 
 
 Bibtex
 ```
-@article{hu2021quantaichi,
-  title={QuanTaichi: A Compiler for Quantized Simulations},
-  author={Hu, Yuanming and Liu, Jiafeng and Yang, Xuanda and Xu, Mingkuan and Kuang, Ye and Xu, Weiwei and Dai, Qiang and Freeman, William T. and Durand, Frédo},
-  journal={ACM Transactions on Graphics (TOG)},
-  volume={40},
-  number={4},
-  year={2021},
-  publisher={ACM}
-}
+TBD
 ```
