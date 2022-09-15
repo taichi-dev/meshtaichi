@@ -134,7 +134,7 @@ Install the latest Taichi by:
 python3 -m pip install —U taichi
 ```
 
-### Mass Spring
+### Mass Spring (Section 8.1)
 
 ![ms_pic](./pics/ms_teaser.jpg)
 
@@ -145,7 +145,7 @@ cd mass_spring && python3 ms.py --model models/armadillo0.1.node [--cpu]
 
 For more details, please refer to this [documentation](mass_spring/README.md).
 
-### Projective Dynamics
+### Projective Dynamics (Section 8.4)
 
 ![pd_pic](./pics/pd_teaser.jpg)
 
@@ -156,7 +156,7 @@ cd projective_dynamics && python3 pd.py --model models/deer.1.node [--cpu]
 
 For more details, please refer to this [documentation](projective_dynamics/README.md).
 
-### XPBD Cloth Simulation
+### XPBD Cloth Simulation (Section 8.5)
 
 ![xpbd_pic](./pics/xpbd_teaser.jpg)
 
@@ -167,7 +167,7 @@ cd xpbd_cloth && python3 models/gen_cloth.py && mkdir results && python3 run_mul
 
 For more details, please refer to this [documentation](xpbd_cloth/README.md).
 
-### Mesh-Grid Hybrid Simulation
+### Mesh-Grid Hybrid Simulation (Section 8.6)
 
 ![mpm_pic](./pics/mpm_teaser.jpg)
 
