@@ -178,8 +178,9 @@ cd lag_mpm && mkdir results && python3 run.py --output ./results && python3 rend
 
 For more details, please refer to this [documentation](lag_mpm/README.md).
 
+---
 
-Bibtex
+### Bibtex
 ```
 @article{yu2022meshtaichi,
   title={MeshTaichi: A Compiler for Efficient Mesh-based Operations},
