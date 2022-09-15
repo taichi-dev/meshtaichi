@@ -178,6 +178,13 @@ cd lag_mpm && mkdir results && python3 run.py --output ./results && python3 rend
 
 For more details, please refer to this [documentation](lag_mpm/README.md).
 
+### Geodesic Distance (Section 8.3)
+
+To reproduce the geodesic distance:
+``` bash
+cd geodesic_distance && python3 geodesic.py --model models/bunny.obj --output colored.obj
+```
+
 ## Bibtex
 ```
 @article{yu2022meshtaichi,
