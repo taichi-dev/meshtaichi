@@ -4,7 +4,7 @@
 
 ![](./pics/teaser.png)
 
-[[Paper]]() [[Video]]()
+[[Paper]]() [[Video]](https://www.youtube.com/watch?v=vjBrk7k8SPE)
 
 The MeshTaichi framework is now officially part of [Taichi](https://github.com/taichi-dev/taichi). This repo only contains examples.
 
