@@ -4,7 +4,7 @@
 
 ![](./pics/teaser.png)
 
-[[Paper]]() [[Video]](https://www.youtube.com/watch?v=vjBrk7k8SPE)
+[[Paper]](https://changyu.io/papers/yu2022meshtaichi.pdf) [[Video]](https://www.youtube.com/watch?v=vjBrk7k8SPE)
 
 The MeshTaichi framework is now officially part of [Taichi](https://github.com/taichi-dev/taichi). This repo only contains examples.
 
@@ -167,8 +167,27 @@ cd xpbd_cloth && python3 models/gen_cloth.py && mkdir results && python3 run_mul
 
 For more details, please refer to this [documentation](xpbd_cloth/README.md).
 
+### Mesh-Grid Hybrid Simulation
+
+![mpm_pic](./pics/mpm_teaser.jpg)
+
+To reproduce the mesh-grid hybrid simulation:
+``` bash
+cd lag_mpm && mkdir results && python3 run.py --output ./results && python3 render_particles.py
+```
+
+For more details, please refer to this [documentation](lag_mpm/README.md).
+
 
 Bibtex
 ```
-TBD
+@article{yu2022meshtaichi,
+  title={MeshTaichi: A Compiler for Efficient Mesh-based Operations},
+  author={Yu, Chang and Xu, Yi and Kuang, Ye and Hu, Yuanming and Liu, Tiantian},
+  journal={ACM Transactions on Graphics (TOG)},
+  volume={41},
+  number={6},
+  year={2022},
+  publisher={ACM}
+}
 ```
