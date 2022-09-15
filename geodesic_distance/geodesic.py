@@ -3,7 +3,7 @@ import meshtaichi_patcher as Patcher
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--output', default='colored.obj')
-parser.add_argument('--model', default="models/bunny.obj")
+parser.add_argument('--model', default="models/yog.obj")
 args = parser.parse_args()
 
 ti.init(arch=ti.gpu)
