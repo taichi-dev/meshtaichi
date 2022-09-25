@@ -42,7 +42,7 @@ The next step is to define the attributes for each mesh element. The type of a m
                    'w' : ti.f32})
 ```
 
-Once the data types are all defined, users can instantiate a modelwith an external file:
+Once the data types are all defined, users can instantiate a model with an external file:
 
 ``` python
 bunny = mesh.build('./bunny.mesh')
