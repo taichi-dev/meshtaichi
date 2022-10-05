@@ -4,9 +4,11 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default="./models/bunny.obj")
+parser.add_argument('--test', action='store_true')
+parser.add_argument('--arch', default='gpu')
 args = parser.parse_args()
 
-ti.init(arch=ti.gpu)
+ti.init(arch=getattr(ti, args.arch))
 
 mesh = ti.TriMesh()
 mesh.verts.place({'x' : ti.math.vec3, 
@@ -33,4 +35,8 @@ def vertex_normal():
 vertex_normal()
 
 n = model.verts.normal.to_numpy()
-print(n.shape, n.sum(), (n**2).sum())
+if args.test:
+    assert int(n.sum()) == 4617
+    assert int((n**2).sum() + 0.5) == 173790
+else:
+    print(n.shape, n.sum(), (n**2).sum())
