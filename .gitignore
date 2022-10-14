@@ -1,0 +1,12 @@
+.idea
+*.pyc
+.vscode
+.DS_Store
+*.mp4
+tmp
+tmp*
+video
+__pycache__
+rec
+*.zip
+.*.swp
