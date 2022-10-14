@@ -8,13 +8,13 @@ An explicit mass-spring system (A larger version is in our video).
 CUDA:
 
 ```
-python3 ms.py --model models/armadillo0.1.node
+python3 ms.py --model models/armadillo0.1.node --arch cuda
 ```
 
 CPU:
 
 ```
-python3 ms.py --model models/armadillo0.1.node --cpu
+python3 ms.py --model models/armadillo0.1.node --arch cpu
 ```
 
 ## Results

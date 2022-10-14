@@ -24,7 +24,7 @@ def renderScene(solver, frame):
     scene.point_light(pos=(0.5, 1.5, 0.5), color=(1, 1, 1))
     scene.point_light(pos=(0.5, 1.5, 1.5), color=(1, 1, 1))
     solver.sdf.render(scene)
-    scene.mesh(solver.model.verts.x, solver.indices, color=(0.5, 0.5, 0.5), two_sided=True)
+    scene.mesh(solver.mesh.verts.x, solver.indices, color=(0.5, 0.5, 0.5), two_sided=True)
     canvas.scene(scene)
     if __show_window:
         window.show()
@@ -32,7 +32,7 @@ def renderScene(solver, frame):
         window.write_image(f"results/frame/{frame:06d}.jpg")
 
 def exportScene(solver, frame, output):
-    pos = solver.model.verts.x.to_numpy()
+    pos = solver.mesh.verts.x.to_numpy()
     indices = solver.indices.to_numpy().reshape(-1, 3)
     ms = pymeshlab.MeshSet()
     ms.add_mesh(pymeshlab.Mesh(pos, indices))

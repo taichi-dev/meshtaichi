@@ -26,33 +26,33 @@ for d in range(3):
 fraction = 1.0
 
 @ti.kernel
-def buildPid(model : ti.template(), pid : ti.template()):
+def buildPid(fem : ti.template(), pid : ti.template()):
     ti.loop_config(block_dim=32)
-    for p in model.verts:
-        base = (p.x * dx_inv - 0.5).cast(int)
+    for p in fem.mesh.verts:
+        base = (fem.x[p.id] * dx_inv - 0.5).cast(int)
         base_pid = ti.rescale_index(grid_m, pid.parent(2), base)
         ti.append(pid.parent(), base_pid, p.id)
 
 @ti.kernel
-def p2g(model : ti.template(), dt : ti.f32, pid : ti.template()):
+def p2g(fem : ti.template(), dt : ti.f32, pid : ti.template()):
     ti.block_local(grid_m)
     for d in ti.static(range(3)):
         ti.block_local(grid_v.get_scalar_field(d))
     for I in ti.grouped(pid):
         p = pid[I]
-        base = (model.verts.x[p] * dx_inv - 0.5).cast(int)
+        base = (fem.x[p] * dx_inv - 0.5).cast(int)
         Im = ti.rescale_index(pid, grid_m, I)
         for D in ti.static(range(3)):
             base[D] = ti.assume_in_range(base[D], Im[D], 0, 1)
-        local = model.verts.x[p] * dx_inv - base
+        local = fem.x[p] * dx_inv - base
         w = [0.5 * (1.5 - local) ** 2, 0.75 - (local - 1) ** 2, 0.5 * (local - 0.5) ** 2]
-        mass = model.verts.m[p]
+        mass = fem.m[p]
         for i, j, k in ti.static(ti.ndrange(3, 3, 3)):
             offset = ti.Vector([i, j, k])
             weight = w[i].x * w[j].y * w[k].z
             dpos = (offset.cast(ti.f32) - local) * dx
-            g_v = weight * mass * (model.verts.v[p] + model.verts.C[p] @ dpos)
-            grid_v[base + offset] += weight * model.verts.f[p] * dt + g_v
+            g_v = weight * mass * (fem.v[p] + fem.C[p] @ dpos)
+            grid_v[base + offset] += weight * fem.f[p] * dt + g_v
             grid_m[base + offset] += weight * mass
 
 bound = 3
@@ -84,16 +84,16 @@ def computeMaxGridV(grid_v : ti.template()) -> ti.f32:
     return max_velocity
 
 @ti.kernel
-def g2p(model : ti.template(), dt : ti.f32, pid : ti.template()):
+def g2p(fem : ti.template(), dt : ti.f32, pid : ti.template()):
     for d in ti.static(range(3)):
         ti.block_local(grid_v.get_scalar_field(d))
     for I in ti.grouped(pid):
         p = pid[I]
-        base = (model.verts.x[p] * dx_inv - 0.5).cast(int)
+        base = (fem.x[p] * dx_inv - 0.5).cast(int)
         Im = ti.rescale_index(pid, grid_m, I)
         for D in ti.static(range(3)):
             base[D] = ti.assume_in_range(base[D], Im[D], 0, 1)
-        local = model.verts.x[p] * dx_inv - base
+        local = fem.x[p] * dx_inv - base
         w = [0.5 * (1.5 - local) ** 2, 0.75 - (local - 1) ** 2, 0.5 * (local - 0.5) ** 2]
         new_v = ti.Vector.zero(ti.f32, 3)
         new_C = ti.Matrix.zero(ti.f32, 3, 3)
@@ -104,9 +104,9 @@ def g2p(model : ti.template(), dt : ti.f32, pid : ti.template()):
             new_v += weight * grid_v[base + offset]
             new_C += weight * 4 * dx_inv * grid_v[base + offset].outer_product(dpos)
 
-        model.verts.v[p] = new_v
-        model.verts.x[p] += new_v * dt
-        model.verts.C[p] = new_C
+        fem.v[p] = new_v
+        fem.x[p] += new_v * dt
+        fem.C[p] = new_C
 
 def solve(cnt, fems):
     frame_time_left = frame_dt
@@ -123,12 +123,12 @@ def solve(cnt, fems):
         grid.deactivate_all()
         for i in range(cnt):
             fems[i].grid.deactivate_all()
-            buildPid(fems[i].model, fems[i].pid)
-            fems[i].model.verts.f.fill(0.0)
-            fems[i].computeForce(fems[i].model)
-            p2g(fems[i].model, dt0, fems[i].pid)
+            buildPid(fems[i], fems[i].pid)
+            fems[i].f.fill(0.0)
+            fems[i].computeForce(fems[i].mesh)
+            p2g(fems[i], dt0, fems[i].pid)
 
         gridOp(dt0)
 
         for i in range(cnt):
-            g2p(fems[i].model, dt0, fems[i].pid)
+            g2p(fems[i], dt0, fems[i].pid)

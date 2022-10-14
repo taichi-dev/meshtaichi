@@ -51,7 +51,7 @@ def write_particles(cnt, fems, fn, slice_size=1000000):
 
     n_particles = 0
     for i in range(cnt):
-      n_particles += len(fems[i].model.verts)
+      n_particles += len(fems[i].mesh.verts)
 
     x_and_v = np.ndarray((n_particles, 3), dtype=np.uint32)
     # Value ranges of x and v components, for quantization
@@ -72,14 +72,14 @@ def write_particles(cnt, fems, fn, slice_size=1000000):
 
         for i in range(cnt):
           # Fetch data slice after slice since we don't have the GPU memory to fetch them channel after channel...
-          group_size = len(fems[i].model.verts)
+          group_size = len(fems[i].mesh.verts)
           num_slices = (group_size + slice_size - 1) // slice_size
           for s in range(num_slices):
               begin = slice_size * s
               end = min(slice_size * (s + 1), group_size)
-              copy_ranged(np_x_slice, fems[i].model.verts.x.get_scalar_field(rotate_axis(d)),
+              copy_ranged(np_x_slice, fems[i].x.get_scalar_field(rotate_axis(d)),
                           begin, end)
-              copy_ranged(np_v_slice, fems[i].model.verts.v.get_scalar_field(rotate_axis(d)),
+              copy_ranged(np_v_slice, fems[i].v.get_scalar_field(rotate_axis(d)),
                           begin, end)
 
               np_x[begin:end] = np_x_slice[:end - begin]
@@ -107,13 +107,13 @@ def write_particles(cnt, fems, fn, slice_size=1000000):
 
     for i in range(cnt):
         # Fetch data slice after slice since we don't have the GPU memory to fetch them channel after channel...
-        group_size = len(fems[i].model.verts)
+        group_size = len(fems[i].mesh.verts)
         num_slices = (group_size + slice_size - 1) // slice_size
         for s in range(num_slices):
             begin = slice_size * s
             end = min(slice_size * (s + 1), group_size)
 
-            copy_ranged(np_color_slice, fems[i].model.verts.color, begin, end)
+            copy_ranged(np_color_slice, fems[i].color, begin, end)
             np_color[begin:end] = np_color_slice[:end - begin]
 
     for c in range(3):

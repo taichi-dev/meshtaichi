@@ -2,27 +2,29 @@ import taichi as ti, argparse, numpy as np, pymeshlab
 import meshtaichi_patcher as Patcher
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--output', default='colored.obj')
 parser.add_argument('--model', default="models/yog.obj")
+parser.add_argument('--test', action='store_true')
+parser.add_argument('--arch', default='gpu')
+parser.add_argument('--output', default='colored.obj')
 args = parser.parse_args()
 
-ti.init(arch=ti.gpu)
+ti.init(arch=getattr(ti, args.arch))
 
 count = ti.field(dtype=ti.i32, shape=())
 error_tol = 1e-3
 src = 233 # Point-0
 
-mesh = ti.TriMesh()
+mesh = Patcher.load_mesh(args.model, relations=['VV', 'VF', 'FV'])
 mesh.verts.place({'x' : ti.math.vec3, 
                   'level' : ti.i32, 
                   'd' : ti.f32, 
                   'new_d' : ti.f32})
+mesh.verts.x.from_numpy(mesh.get_position_as_numpy())
 
-model = mesh.build(Patcher.mesh2meta(args.model, relations=['vv', 'vf', 'fv']))
-x = model.verts.x
-d = model.verts.d
-level = model.verts.level
-new_d = model.verts.new_d
+x = mesh.verts.x
+d = mesh.verts.d
+level = mesh.verts.level
+new_d = mesh.verts.new_d
 
 @ti.func
 def update_step(v0, v1, v2):
@@ -33,16 +35,16 @@ def update_step(v0, v1, v2):
     lt = l.transpose()
     q = ti.Matrix([[xs[i].dot(xs[j]) for j in ti.static(range(2))] for i in ti.static(range(2))])
     Q = q.inverse()
-    p = ((lt @ Q @ t + ((lt @ Q @ t)**2 - lt @ Q @ l * (t.transpose() @ Q @ t - 1))**0.5) / (lt @ Q @ l))[0, 0]
+    p = ((lt @ Q @ t + ((lt @ Q @ t)**2 - lt @ Q @ l * (t.transpose() @ Q @ t - 1))**0.5) / (lt @ Q @ l))[0]
     n = X @ Q @ (t - 1)
     cond = Q @ X.transpose() @ n
-    if cond[0, 0] >= 0 or cond[1, 0] >= 0 or d[v1] > 1e9 or d[v2] > 1e9:
+    if cond[0] >= 0 or cond[1] >= 0 or d[v1] > 1e9 or d[v2] > 1e9:
         p = min(d[v1] + xs[0].norm(), d[v2] + xs[1].norm())
     return p
 
 @ti.kernel
 def ptp(l: ti.i32, r: ti.i32):
-    for u in model.verts:
+    for u in mesh.verts:
         if l <= u.level <= r:
             dist = u.d
             for f in u.faces:
@@ -57,7 +59,7 @@ def ptp(l: ti.i32, r: ti.i32):
 
 @ti.kernel
 def get_level(l: ti.i32):
-    for u in model.verts:
+    for u in mesh.verts:
         if u.level == l:
             count[None] += 1
             for v in u.verts:
@@ -87,7 +89,11 @@ for k in range(1, 10000):
     d.copy_from(new_d)
 
 arr = d.to_numpy()
-print("mean = ", arr.mean())
+print("mean =", arr.mean())
+
+if args.test:
+    assert int(arr.mean()) == 17
+    exit(0)
 
 def FF_to_rgb(x):
     r = (x & 0xFF0000) >> 16
@@ -113,19 +119,21 @@ def sample(x):
     p = x - x0
     return [p * c1[i] + (1 - p) * c0[i] for i in range(3)]
 
-indices = ti.Vector.field(3, dtype=ti.u32, shape=len(model.faces))
+indices = ti.Vector.field(3, dtype=ti.u32, shape=len(mesh.faces))
 @ti.kernel
 def get_vertices():
-    for f in model.faces:
+    for f in mesh.faces:
         indices[f.id] = [f.verts[i].id for i in ti.static(range(3))]
 get_vertices()
 
-vert_colors = np.zeros(dtype=np.float32, shape=(len(model.verts), 4))
+vert_colors = np.zeros(dtype=np.float32, shape=(len(mesh.verts), 4))
 vert_colors[:, 3] = 1
 ma = arr.max()
 for i in range(vert_colors.shape[0]):
     vert_colors[i, :3] = sample(arr[i] / ma)
 
 ms = pymeshlab.MeshSet()
-ms.add_mesh(pymeshlab.Mesh(vertex_matrix=model.verts.x.to_numpy(), face_matrix=indices.to_numpy(), v_color_matrix=vert_colors))
-ms.save_current_mesh('./colored.obj')
+ms.add_mesh(pymeshlab.Mesh(vertex_matrix=mesh.verts.x.to_numpy(), 
+                           face_matrix=indices.to_numpy(), 
+                           v_color_matrix=vert_colors))
+ms.save_current_mesh(args.output)

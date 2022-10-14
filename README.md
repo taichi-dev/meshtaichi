@@ -11,7 +11,7 @@ The MeshTaichi framework is now officially part of [Taichi](https://github.com/t
 ### **A mesh compiler that provides an intuitive programming model for efficient mesh-based operations**
 Meshes are an indispensable representation in many graphics applications because they provide conformal spatial discretizations. However, mesh-based operations are often slow due to unstructured memory access patterns. We propose MeshTaichi, a novel mesh compiler that provides an intuitive programming model for efficient mesh-based operations. Our programming model hides the complex indexing system from users and allows users to write mesh-based operations using reference-style neighborhood queries. Our compiler achieves its high performance by exploiting data locality. We partition input meshes and prepare the wanted relations by inspecting users’ code during compile time. During run time, we further utilize on-chip memory (shared memory on GPU and L1 cache on CPU) to access the wanted attributes of mesh elements efficiently. Our compiler decouples low-level optimization options with computations, so that users can explore different localized data attributes and different memory orderings without changing their computation code. As a result, users can write concise code using our programming model to generate efficient mesh-based computations on both CPU and GPU backends. 
 
-#### **Usage**
+## **Usage**
 
 We demonstrate the usage of MeshTaichi using an explicit finite element method example with the Neo-Hookean model following the course note [[Sifakis and Barbic 2012]](http://viterbi-web.usc.edu/~jbarbic/femdefo/). The First Piola-Kirchhoff stress tensor is given as:
 
@@ -23,14 +23,18 @@ where 𝐹 describes the deformation gradient, 𝐽 is the determinant of
 
 #### **Describing the Mesh Data**
 
-We need to define mesh data structures before applying them to computations. We provide the following APIs to create our new mesh data types:
+We need to define mesh data structures before applying them to computations. We provide the following APIs to create our new mesh instance:
 
 ```python
-mesh = ti.TetMesh() # new tetrahedron mesh data type 
-# mesh = ti.TriMesh() # new triangle mesh data type
+import taichi as ti
+import meshtaichi as Patcher
+# load model file 'bunny.mesh' as tetrahedron mesh and initialize Cell-Vertex relation.
+mesh = Patcher.load_mesh("bunny.mesh", relations=["CV"])
 ```
 
-Note that `mesh` is a mesh data type instead of a mesh instance. A `mesh` can be instantiated by multiple models.
+Users can instantiate a mesh with an external file. Our compiler can instantiate triangle meshes using surface representation formats like “.obj” and “.ply” files, or volumetric representation formats like “.mesh” file.
+
+Parameter `relations` is a list of relations, e.g `['FV', 'VV']` means initializing Face-Vert and Vertex-Vertex relations, where `'V'` for Vertex, `'E'` for Edge, `'F'` for Face, and `'C'` for Cell.
 
 The next step is to define the attributes for each mesh element. The type of a mesh attribute can be a scalar, a vector, a matrix, or their corresponding quantized versions. In this FEM example, each vertex has three attributes: the position `pos`, the velocity `vel` and the force applied to it `force`. All three attributes are floating-point type three-dimensional vectors based on the Taichi type system. Each (tetrahedral-)cell in the mesh has two attributes: the rest-pose volume `w` which is a floating-point scalar, and the inverted rest-pose shape matrix `B` which is a 3 × 3 matrix. The code snippet defining the mesh elements is listed below.
 
@@ -42,24 +46,16 @@ The next step is to define the attributes for each mesh element. The type of a m
                    'w' : ti.f32})
 ```
 
-Once the data types are all defined, users can instantiate a model with an external file:
-
-``` python
-bunny = mesh.build('./bunny.mesh')
-```
-
-Our compiler can instantiate triangle meshes using surface repre- sentation formats like “.obj” and “.ply” files, or volumetric representation formats like “.mesh” file.
-
 #### **Computing on a Mesh**
 
 The mesh computations are declared within a `mesh-for` of a kernel, which can be as simple as shown below.
 
 ``` python
 # parallel loop over all mesh cells
-for c in bunny.cells:
+for c in mesh.cells:
   ...
 # parallel loop over all mesh vertices
-for v in bunny.verts:
+for v in mesh.verts:
   ...
 ```
 
@@ -68,7 +64,7 @@ A `mesh-for` has very similar syntax as a `range-for` which loops over the indic
 Most mesh-based operations involve not only the attributes of an element, but the attributes of the neighboring elements as well. Our compiler allows users to access neighbor attributes either with reference-based queries using another nested sequential `mesh-for` loop or with index-based queries using a `range-for` loop as shown below.
 
 ``` python
-for c in bunny.cells:
+for c in mesh.cells:
   total_force = c.verts[0].force
   # reference-based access
   for v in c.verts:
@@ -76,7 +72,7 @@ for c in bunny.cells:
 ```
 
 ``` python
-for c in bunny.cells:
+for c in mesh.cells:
   total_force = c.verts[0].force
   # index-based access
   for i in range(c.verts.size):
@@ -88,7 +84,7 @@ Now we have the way to access the neighbors. Let us wrap everything up and write
 ``` python
 @ti.kernel
 def substep():
-  for c in bunny.cells:
+  for c in mesh.cells:
     Ds0 = c.verts[0].pos - c.verts[3].pos
     Ds1 = c.verts[1].pos - c.verts[3].pos
     Ds2 = c.verts[2].pos - c.verts[3].pos
@@ -102,7 +98,7 @@ def substep():
     c.verts[2].force += H[:, 2]
     c.verts[3].force += -H[:, 0] - H[:, 1] - H[:, 2]
   
-  for v in bunny.verts:
+  for v in mesh.verts:
     # assuming unit mass for simplicity
     v.vel += dt * v.force 
     v.pos += dt * v.vel
@@ -113,12 +109,12 @@ def substep():
 Recall that we visit all elements in a `mesh-for` using their references, users do not need to bookkeep their corresponding indices. However, there are cases where the indices of elements are wanted. In these cases, we refer users to visit the `id` attribute of an element. We demonstrate an example to export the positions of vertices to an external multi-dimensional array as follows:
 
 ``` python
-# An 1D array of len(bunny.verts) 3D f32 vectors
-pos_ex = ti.Vector.field(3, ti.f32, shape=len(bunny.verts))
+# An 1D array of len(mesh.verts) 3D f32 vectors
+pos_ex = ti.Vector.field(3, ti.f32, shape=len(mesh.verts))
 
 @ti.kernel
 def export():
-  for v in bunny.verts:
+  for v in mesh.verts:
     pos_ex[v.id] = v.pos
 ```
 
@@ -140,7 +136,7 @@ python3 -m pip install —U taichi meshtaichi_patcher
 
 To reproduce the mass-spring system:
 ``` bash
-cd mass_spring && python3 ms.py --model models/armadillo0.1.node [--cpu]
+cd mass_spring && python3 ms.py --model models/armadillo0.1.node --arch [cpu/cuda]
 ```
 
 For more details, please refer to this [documentation](mass_spring/README.md).
@@ -151,7 +147,7 @@ For more details, please refer to this [documentation](mass_spring/README.md).
 
 To reproduce the projective dynamics:
 ``` bash
-cd projective_dynamics && python3 pd.py --model models/deer.1.node [--cpu]
+cd projective_dynamics && python3 pd.py --model models/deer.1.node --arch [cpu/cuda]
 ```
 
 For more details, please refer to this [documentation](projective_dynamics/README.md).
@@ -162,7 +158,7 @@ For more details, please refer to this [documentation](projective_dynamics/READM
 
 To reproduce the XPBD cloth simulation:
 ``` bash
-cd xpbd_cloth && python3 models/gen_cloth.py && mkdir results && python3 run_multiple.py --output ./results
+cd xpbd_cloth && python3 models/gen_cloth.py && mkdir results && python3 run_multiple.py --output ./results  --arch [cpu/cuda]
 ```
 
 For more details, please refer to this [documentation](xpbd_cloth/README.md).
@@ -182,14 +178,14 @@ For more details, please refer to this [documentation](lag_mpm/README.md).
 
 To reproduce the vertex normal:
 ``` bash
-cd vertex_normal && python3 normal.py --model models/bunny.obj
+cd vertex_normal && python3 normal.py --model models/bunny.obj --arch [cpu/cuda]
 ```
 
 ### Geodesic Distance (Section 8.3)
 
 To reproduce the geodesic distance:
 ``` bash
-cd geodesic_distance && python3 geodesic.py --model models/yog.obj --output colored.obj
+cd geodesic_distance && python3 geodesic.py --model models/yog.obj --output colored.obj --arch [cpu/cuda]
 ```
 
 ## Bibtex

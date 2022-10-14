@@ -4,10 +4,10 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default="models/armadillo0.1.node")
-parser.add_argument('--cpu', action='store_true')
+parser.add_argument('--arch', default='gpu')
 args = parser.parse_args()
 
-ti.init(arch=ti.cpu if args.cpu else ti.cuda)
+ti.init(arch=getattr(ti, args.arch))
 
 mass = 1.0
 stiffness = 5e5
@@ -16,22 +16,22 @@ bottom_z = -70.0
 dt = 2e-4
 eps = 1e-6
 
-mesh = ti.TetMesh()
+mesh = Patcher.load_mesh(args.model, relations=["EV", "VV", "CV"])
 mesh.verts.place({'x' : ti.math.vec3, 
                   'ox' : ti.math.vec3, 
                   'v' : ti.math.vec3, 
                   'f' : ti.math.vec3})
 
 mesh.edges.place({'rest_len' : ti.f32})
-model = mesh.build(Patcher.mesh2meta(args.model, relations=["ev", "vv", "cv"]))
 
-model.verts.ox.copy_from(model.verts.x)
-model.verts.v.fill([0.0, 0.0, -100.0])
+mesh.verts.x.from_numpy(mesh.get_position_as_numpy())
+mesh.verts.ox.copy_from(mesh.verts.x)
+mesh.verts.v.fill([0.0, 0.0, -100.0])
 
 @ti.kernel
 def vv_substep():
-    ti.mesh_local(model.verts.x, model.verts.ox)
-    for v0 in model.verts:
+    ti.mesh_local(mesh.verts.x, mesh.verts.ox)
+    for v0 in mesh.verts:
         v0.v *= ti.exp(-dt * damping)
         total_f = ti.Vector([0.0, -98.0, 0.0])
         
@@ -44,12 +44,12 @@ def vv_substep():
 
 @ti.kernel
 def ev_substep():
-    for v in model.verts:
+    for v in mesh.verts:
         v.v *= ti.exp(-dt * damping)
         v.f = ti.Vector([0.0, -98.0, 0.0])
 
-    ti.mesh_local(model.verts.f, model.verts.x)
-    for e in model.edges:
+    ti.mesh_local(mesh.verts.f, mesh.verts.x)
+    for e in mesh.edges:
         v0 = e.verts[0]
         v1 = e.verts[1]
         disp0 = v0.x - v1.x
@@ -59,7 +59,7 @@ def ev_substep():
 
 @ti.kernel
 def advance():
-    for v0 in model.verts:
+    for v0 in mesh.verts:
         v0.v += dt * v0.f
         if v0.x[1] < bottom_z:
             v0.x[1] = bottom_z
@@ -78,11 +78,11 @@ camera.up(0, 1, 0)
 camera.lookat(0, -70, 0)
 camera.fov(75)
 
-indices = ti.field(ti.u32, shape = len(model.cells) * 4 * 3)
+indices = ti.field(ti.u32, shape = len(mesh.cells) * 4 * 3)
 
 @ti.kernel
 def initIndices():
-    for c in model.cells:
+    for c in mesh.cells:
         ind = [[0, 2, 1], [0, 3, 2], [0, 1, 3], [1, 2, 3]]
         for i in ti.static(range(4)):
             for j in ti.static(range(3)):
@@ -92,7 +92,7 @@ initIndices()
 
 @ti.kernel
 def calcRestlen():
-    for e in model.edges:
+    for e in mesh.edges:
         e.rest_len = (e.verts[0].x - e.verts[1].x).norm()
 
 calcRestlen()
@@ -105,7 +105,7 @@ while True:
     camera.track_user_inputs(window, movement_speed=0.03, hold_key=ti.ui.RMB)
     scene.set_camera(camera)
     scene.ambient_light((0.5, 0.5, 0.5))
-    scene.mesh(model.verts.x, indices, color = (0.5, 0.5, 0.5))
+    scene.mesh(mesh.verts.x, indices, color = (0.5, 0.5, 0.5))
     scene.point_light(pos=(-50, 150, -50), color=(1, 1, 1))
     scene.point_light(pos=(-50, 150, -150), color=(1, 1, 1))
     canvas.scene(scene)

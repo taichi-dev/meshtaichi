@@ -9,13 +9,13 @@ A toy-case demo is provided for showing simulation in real-time:
 CUDA:
 
 ```
-python3 run_demo.py
+python3 run_demo.py --arch cuda
 ```
 
 CPU:
 
 ```
-python3 run_demo.py --cpu
+python3 run_demo.py --arch cpu
 ```
 
 To reproduce the high-resolution 10x10 cloth simulation in our video. You could run the following commands to generate cloth first and then begin simulation. We suggest you run the script using CUDA:
@@ -23,7 +23,7 @@ To reproduce the high-resolution 10x10 cloth simulation in our video. You could 
 ```
 python3 models/gen_cloth.py
 mkdir results
-python3 run_multiple.py --output ./results
+python3 run_multiple.py --output ./results --arch cuda
 ```
 
 ## Results (demo case)

@@ -1,4 +1,5 @@
 import taichi as ti
+import meshtaichi_patcher as Patcher
 
 @ti.data_oriented
 class PositionBasedDynamics:
@@ -43,15 +44,15 @@ class PositionBasedDynamics:
         self.XPBD = XPBD
 
         # mesh
-        self.mesh_builder = ti.Mesh.Tri()
-        self.mesh_builder.verts.place({
+        self.mesh = Patcher.load_mesh(rest_pose, relations=["EV", "FV", "EF"])
+        self.mesh.verts.place({
             'x' : ti.math.vec3,
             'new_x' : ti.math.vec3,
             'v' : ti.math.vec3,
             'invM' : ti.f32,
             'dp' : ti.math.vec3
         }, reorder = reorder_all)
-        self.mesh_builder.edges.place({
+        self.mesh.edges.place({
             'rest_len' : ti.f32,
             'la_s' : ti.f32,    # total Lagrange multiplier for stretch constraint (at the current iteration)
             'la_b' : ti.f32, # multiplier for bending constraint
@@ -59,8 +60,8 @@ class PositionBasedDynamics:
             'stretch_compliance' : ti.f32,
             'bending_compliance' : ti.f32
         }, reorder = reorder_all)
-        self.model = self.mesh_builder.build(rest_pose)
-        self.indices = ti.field(dtype = ti.u32, shape = len(self.model.faces) * 3)
+        self.mesh.verts.x.from_numpy(self.mesh.get_position_as_numpy())
+        self.indices = ti.field(dtype = ti.u32, shape = len(self.mesh.faces) * 3)
 
         self.initIndices()
 
@@ -70,35 +71,35 @@ class PositionBasedDynamics:
 
     @ti.kernel
     def initialize(self, scale : ti.f32, offset : ti.template()):
-        for v in self.model.verts:
+        for v in self.mesh.verts:
             v.x = v.x * scale + ti.Vector(offset)
             v.invM = self.mass
             fixed, inside, dotnv, diff_vel, n = self.sdf.check(v.x, v.v)
             if inside:
                 v.invM = 0.0
         
-        for e in self.model.edges:
+        for e in self.mesh.edges:
             e.rest_len = (e.verts[0].x - e.verts[1].x).norm()
             e.stretch_compliance = self.stretch_compliance_callback(e.verts[0].id)
             e.bending_compliance = self.bending_compliance_callback(e.verts[0].id)
 
     @ti.kernel
     def initIndices(self):
-        for f in self.model.faces:
+        for f in self.mesh.faces:
             self.indices[f.id * 3 + 0] = f.verts[0].id
             self.indices[f.id * 3 + 1] = f.verts[1].id
             self.indices[f.id * 3 + 2] = f.verts[2].id
 
     @ti.kernel
     def applyExtForce(self, dt : ti.f32):
-        for v0 in self.model.verts:
+        for v0 in self.mesh.verts:
             if v0.invM > 0.0:
                 v0.v += self.gravity[None] * dt
             v0.new_x = v0.x + v0.v * dt
     
     @ti.kernel
     def update(self, dt : ti.f32):
-        for v0 in self.model.verts:
+        for v0 in self.mesh.verts:
             if v0.invM <= 0.0:
                 v0.new_x = v0.x
             else:
@@ -107,19 +108,19 @@ class PositionBasedDynamics:
 
     @ti.kernel
     def preSolve(self):
-        for v in self.model.verts:
+        for v in self.mesh.verts:
             v.dp.fill(0.0)
 
     @ti.kernel
     def postSolve(self, sc : ti.template()):
-        for v in self.model.verts:
+        for v in self.mesh.verts:
             v.new_x += v.dp * sc
     
     @ti.kernel
     def solveStretch(self, dt : ti.f32):
         ti.loop_config(block_dim=self.block_size)
-        ti.mesh_local(self.model.verts.dp, self.model.verts.invM, self.model.verts.new_x)
-        for e in self.model.edges:
+        ti.mesh_local(self.mesh.verts.dp, self.mesh.verts.invM, self.mesh.verts.new_x)
+        for e in self.mesh.edges:
             v0, v1 = e.verts[0], e.verts[1]
             w1, w2 = v0.invM, v1.invM
             if w1 + w2 > 0.:
@@ -140,8 +141,8 @@ class PositionBasedDynamics:
     @ti.kernel
     def solveBending(self, dt : ti.f32):
         ti.loop_config(block_dim=self.block_size)
-        ti.mesh_local(self.model.verts.dp, self.model.verts.invM, self.model.verts.new_x)
-        for e in self.model.edges:
+        ti.mesh_local(self.mesh.verts.dp, self.mesh.verts.invM, self.mesh.verts.new_x)
+        for e in self.mesh.edges:
             if e.faces.size == 2:
                 v1, v2 = e.verts[0], e.verts[1]
                 k, l = 0, 0
@@ -201,8 +202,8 @@ class PositionBasedDynamics:
 
             self.applyExtForce(dt0)
             if self.XPBD:
-                self.model.edges.la_s.fill(0.)
-                self.model.edges.la_b.fill(0.)
+                self.mesh.edges.la_s.fill(0.)
+                self.mesh.edges.la_b.fill(0.)
             for iter in range(self.rest_iter):
                     self.preSolve()
                     self.solveStretch(dt0)

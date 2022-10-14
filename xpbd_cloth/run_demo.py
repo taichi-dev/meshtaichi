@@ -3,14 +3,13 @@ import numpy as np
 from render import *
 from solver import PositionBasedDynamics
 from sdf import *
-import meshtaichi_patcher as Patcher
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--cpu', action='store_true')
+parser.add_argument('--arch', default='gpu')
 args = parser.parse_args()
 
-ti.init(arch=ti.cpu if args.cpu else ti.cuda)
+ti.init(arch=getattr(ti, args.arch))
 
 sdf = HangSdfModel(np.array([[0.25, 0.75, 0.75], 
                              [0.75, 0.75, 0.75], 
@@ -23,7 +22,7 @@ def stretch_callback(id): return 1e-7
 @ti.func
 def bending_callback(id): return 1e-6
 
-solver = PositionBasedDynamics(rest_pose = Patcher.mesh2meta("models/cloth.obj", relations=["ev", "fv", "ef"]),
+solver = PositionBasedDynamics(rest_pose = "models/cloth.obj",
                           sdf = sdf,
                           stretch_compliance_callback = stretch_callback,
                           bending_compliance_callback = bending_callback,

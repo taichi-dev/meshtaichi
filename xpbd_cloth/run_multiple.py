@@ -4,7 +4,6 @@ import time
 from render import *
 from solver import PositionBasedDynamics
 from sdf import *
-import meshtaichi_patcher as patcher
 import argparse
 
 def parse_args():
@@ -14,7 +13,7 @@ def parse_args():
                         type=str,
                         default="./results/",
                         help='Output Path')
-    parser.add_argument('--cpu', action='store_true')
+    parser.add_argument('--arch', default='gpu')
     
     args = parser.parse_args()
     return args
@@ -22,7 +21,7 @@ def parse_args():
 
 args = parse_args()
 
-ti.init(arch=ti.cuda, device_memory_GB=4)
+ti.init(arch=getattr(ti, args.arch), device_memory_GB=4)
 
 N = 10
 points = []
@@ -56,7 +55,7 @@ def bending_callback(id):
     if x == 9: bending_compliance = 0.5e3
     return bending_compliance
 
-solver = PositionBasedDynamics(rest_pose = patcher.mesh2meta("models/cloth10x10.obj", ["ev", "fv", "ef"]),
+solver = PositionBasedDynamics(rest_pose = "models/cloth10x10.obj",
                           sdf = sdf,
                           stretch_compliance_callback = stretch_callback,
                           bending_compliance_callback = bending_callback,
@@ -65,14 +64,9 @@ solver = PositionBasedDynamics(rest_pose = patcher.mesh2meta("models/cloth10x10.
                           rest_iter = 5,
                           reorder_all=False)
 
-initScene(position=(1.44, 0.84544, 3.176), 
-          lookat=(1.4747, 1.0883, 2.20672), 
-          show_window=False)
-
 for frame in range(240):
     start_time = time.time()
     solver.solve()
     end_time = time.time()
     print(f"frame: {frame}, time={(end_time - start_time):03f}s")
-    # renderScene(solver, frame)
     exportScene(solver, frame, args.output)

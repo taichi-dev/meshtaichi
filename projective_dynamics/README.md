@@ -7,13 +7,13 @@ A projective dynamics simulation of a deer. We randomized all vertices' position
 CUDA:
 
 ```
-python3 run.py --model ./models/deer.1.node
+python3 pd.py --model ./models/deer.1.node --arch cuda
 ```
 
 CPU:
 
 ```
-python3 run.py --cpu --model ./models/deer.1.node
+python3 pd.py --model ./models/deer.1.node --arch cpu
 ```
 
 ## Results
