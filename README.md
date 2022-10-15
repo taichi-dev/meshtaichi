@@ -21,7 +21,7 @@ We demonstrate the usage of MeshTaichi using an explicit finite element method e
 where 𝐹 describes the deformation gradient, 𝐽 is the determinant of
 𝐹 , and 𝜇 and 𝜆 are the Lamé coefficients.
 
-#### **Describing the Mesh Data**
+### **Describing the Mesh Data**
 
 We need to define mesh data structures before applying them to computations. We provide the following APIs to create our new mesh instance:
 
@@ -46,7 +46,13 @@ The next step is to define the attributes for each mesh element. The type of a m
                    'w' : ti.f32})
 ```
 
-#### **Computing on a Mesh**
+**Note**: For most mesh-based applications, the position of vertices is a crucial attribute provided by the mesh file. We provide the following API to get the vertex position of the current mesh to a NumPy array and load into a mesh attribute:
+
+```
+mesh.verts.pos.from_numpy(mesh.get_position_as_numpy())
+```
+
+### **Computing on a Mesh**
 
 The mesh computations are declared within a `mesh-for` of a kernel, which can be as simple as shown below.
 
@@ -104,7 +110,7 @@ def substep():
     v.pos += dt * v.vel
 ```
 
-#### **Interacting with Non-mesh Data**
+### **Interacting with Non-mesh Data**
 
 Recall that we visit all elements in a `mesh-for` using their references, users do not need to bookkeep their corresponding indices. However, there are cases where the indices of elements are wanted. In these cases, we refer users to visit the `id` attribute of an element. We demonstrate an example to export the positions of vertices to an external multi-dimensional array as follows:
 
@@ -112,13 +118,17 @@ Recall that we visit all elements in a `mesh-for` using their references, users 
 # An 1D array of len(mesh.verts) 3D f32 vectors
 pos_ex = ti.Vector.field(3, ti.f32, shape=len(mesh.verts))
 
+# export using id attribute
 @ti.kernel
 def export():
   for v in mesh.verts:
     pos_ex[v.id] = v.pos
+
+# export using built-in method
+pos_ex.copy_from(mesh.verts.pos)
 ```
 
-For more details of the usage of our programming language, please refer to our paper or see the examples in this repo.
+**For more details of the usage of our programming language, please refer to our paper or see the examples in this repo.**
 
 We test MeshTaichi on a variety of physically-based simulation and geometry processing applications with both triangle and tetrahedron meshes. MeshTaichi achieves a consistent speedup ranging from 1.4× to 6×, compared to state-of-the-art mesh data structures and compilers.
 
