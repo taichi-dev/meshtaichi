@@ -1,8 +1,6 @@
 import os
 import taichi as ti
 import meshtaichi_patcher as Patcher
-ti.init(arch=ti.cuda, device_memory_GB=4.0, packed=True)
-from fem import *
 import argparse
 
 def parse_args():
@@ -12,14 +10,23 @@ def parse_args():
                         type=str,
                         default="./results/",
                         help='Output Path')
+    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--arch', default='cuda')
     args = parser.parse_args()
     return args
 
 
 args = parse_args()
 
-os.makedirs(args.output + "/armadillo", exist_ok=True)
-os.makedirs(args.output + "/particles", exist_ok=True)
+if not args.test:
+    ti.init(arch=ti.cuda, device_memory_GB=4.0, packed=True)
+
+    os.makedirs(args.output + "/armadillo", exist_ok=True)
+    os.makedirs(args.output + "/particles", exist_ok=True)
+else:
+    ti.init(arch=getattr(ti, args.arch), random_seed=0)
+
+from fem import *
 
 model_size = 0.10
 
@@ -31,7 +38,11 @@ def init(x, y, i):
     model[0] = transform(model[0], model_size, [x, y, 0.05 + (model_size / 2 + 0.012) * i])
     models.append(model)
 
-for i in range(30):
+n_armadillo = 30
+if args.test:
+    n_armadillo = 3
+
+for i in range(n_armadillo):
     init(0.5, 0.5, i)
     init(0.77, 0.22, i)
     init(0.22, 0.77, i)
@@ -40,6 +51,15 @@ for i in range(30):
 
 mesh = Patcher.load_mesh(models, relations=["CV"])
 fems.append(FEM(mesh))
+
+if args.test:
+    for frame in range(10):
+        solve(1, fems, log=False)
+    arr = fems[0].x.to_numpy()
+    print(arr, arr.mean(), (arr**2).mean())
+    assert '%.3f' % arr.mean() == '0.360'
+    assert '%.3f' % (arr**2).mean() == '0.215'
+    exit(0)
 
 window = ti.ui.Window("MPM", (1920, 1080), show_window=False)
 canvas = window.get_canvas()

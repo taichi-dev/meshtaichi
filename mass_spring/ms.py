@@ -5,6 +5,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default="models/armadillo0.1.node")
 parser.add_argument('--arch', default='gpu')
+parser.add_argument('--test', action='store_true')
 args = parser.parse_args()
 
 ti.init(arch=getattr(ti, args.arch))
@@ -68,16 +69,6 @@ def advance():
             v0.v[2] = 0
         v0.x += v0.v * dt
 
-window = ti.ui.Window("Mass Spring", (1024, 768))
-
-canvas = window.get_canvas()
-scene = ti.ui.Scene()
-camera = ti.ui.Camera()
-camera.position(-200, -20, -130)
-camera.up(0, 1, 0)
-camera.lookat(0, -70, 0)
-camera.fov(75)
-
 indices = ti.field(ti.u32, shape = len(mesh.cells) * 4 * 3)
 
 @ti.kernel
@@ -96,8 +87,27 @@ def calcRestlen():
         e.rest_len = (e.verts[0].x - e.verts[1].x).norm()
 
 calcRestlen()
+if args.test:
+    for frame in range(100):
+        for i in range(25):
+            advance()
+            vv_substep()
+    arr = mesh.verts.x.to_numpy()
+    assert '%.3f' % arr.mean() == '2.742'
+    assert '%.1f' % (arr**2).mean() == '1351.7'
+    exit(0)
 
-while True:
+window = ti.ui.Window("Mass Spring", (1024, 768))
+
+canvas = window.get_canvas()
+scene = ti.ui.Scene()
+camera = ti.ui.Camera()
+camera.position(-200, -20, -130)
+camera.up(0, 1, 0)
+camera.lookat(0, -70, 0)
+camera.fov(75)
+
+while window.running:
     for i in range(25):
         advance()
         vv_substep()
@@ -110,3 +120,6 @@ while True:
     scene.point_light(pos=(-50, 150, -150), color=(1, 1, 1))
     canvas.scene(scene)
     window.show()
+    for event in window.get_events(ti.ui.PRESS):
+        if event.key in [ti.ui.ESCAPE]:
+            window.running = False

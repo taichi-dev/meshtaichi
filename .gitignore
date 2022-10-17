@@ -10,3 +10,8 @@ __pycache__
 rec
 *.zip
 .*.swp
+
+lag_mpm/results
+xpbd_cloth/results
+
+**/imgui.ini

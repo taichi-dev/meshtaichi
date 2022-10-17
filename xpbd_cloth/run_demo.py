@@ -7,6 +7,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--arch', default='gpu')
+parser.add_argument('--test', action='store_true')
 args = parser.parse_args()
 
 ti.init(arch=getattr(ti, args.arch))
@@ -31,12 +32,21 @@ solver = PositionBasedDynamics(rest_pose = "models/cloth.obj",
                           rest_iter= 5,
                           reorder_all=False)
 
+if args.test:
+    for frame in range(100):
+        solver.solve()
+    arr = solver.mesh.verts.x.to_numpy()
+    assert '%.3f' % arr.mean() == '0.579'
+    assert '%.3f' % (arr**2).mean() == '0.363'
+    exit(0)
+
 initScene(position=(0.5, -0.3, 0.95), 
           lookat=(0.52, 0.52, 0.4), 
           show_window=True)
 
 frame = 0
-while True:
+running = True
+while running:
     solver.solve()
-    renderScene(solver, frame)
+    running = renderScene(solver, frame)
     frame += 1
