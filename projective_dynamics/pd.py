@@ -191,7 +191,7 @@ if args.test:
     for frame in range(100):
         newton()
     arr = x.to_numpy()
-    assert abs(arr.mean() - 0.496) < 1e-3
+    assert abs(arr.mean() - 0.50) < 1e-2
     assert abs((arr**2).mean() - 0.28) < 1e-2
     exit(0)
 
