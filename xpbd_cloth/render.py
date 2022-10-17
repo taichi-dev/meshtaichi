@@ -30,6 +30,10 @@ def renderScene(solver, frame):
         window.show()
     else:
         window.write_image(f"results/frame/{frame:06d}.jpg")
+    for event in window.get_events(ti.ui.PRESS):
+        if event.key in [ti.ui.ESCAPE]:
+            window.running = False
+    return window.running
 
 def exportScene(solver, frame, output):
     pos = solver.mesh.verts.x.to_numpy()

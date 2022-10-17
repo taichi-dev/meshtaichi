@@ -108,11 +108,11 @@ def g2p(fem : ti.template(), dt : ti.f32, pid : ti.template()):
         fem.x[p] += new_v * dt
         fem.C[p] = new_C
 
-def solve(cnt, fems):
+def solve(cnt, fems, log=True):
     frame_time_left = frame_dt
     substep = 0
     while frame_time_left > 0.0:
-        print(f"substep: {substep}")
+        if log: print(f"substep: {substep}")
         substep += 1
 
         max_grid_v = computeMaxGridV(grid_v)

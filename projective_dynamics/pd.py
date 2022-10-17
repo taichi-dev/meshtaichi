@@ -5,9 +5,10 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default="models/deer.1.node")
 parser.add_argument('--arch', default='gpu')
+parser.add_argument('--test', action='store_true')
 args = parser.parse_args()
 
-ti.init(arch=getattr(ti, args.arch), dynamic_index=True)
+ti.init(arch=getattr(ti, args.arch), dynamic_index=True, random_seed=0)
 
 E, nu = 5e5, 0.0
 mu, la = E / (2 * (1 + nu)), E * nu / ((1 + nu) * (1 - 2 * nu))
@@ -186,6 +187,14 @@ def init():
 init()
 get_matrix()
 
+if args.test:
+    for frame in range(100):
+        newton()
+    arr = x.to_numpy()
+    assert abs(arr.mean() - 0.50) < 1e-2
+    assert abs((arr**2).mean() - 0.28) < 1e-2
+    exit(0)
+
 window = ti.ui.Window("Projective Dynamics", (1024, 768))
 canvas = window.get_canvas()
 scene = ti.ui.Scene()
@@ -209,3 +218,6 @@ while window.running:
     canvas.scene(scene)
 
     window.show()
+    for event in window.get_events(ti.ui.PRESS):
+        if event.key in [ti.ui.ESCAPE]:
+            window.running = False
