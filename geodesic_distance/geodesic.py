@@ -1,4 +1,4 @@
-import taichi as ti, argparse, numpy as np, pymeshlab
+import taichi as ti, argparse, numpy as np
 import meshtaichi_patcher as Patcher
 
 parser = argparse.ArgumentParser()
@@ -126,14 +126,16 @@ def get_vertices():
         indices[f.id] = [f.verts[i].id for i in ti.static(range(3))]
 get_vertices()
 
-vert_colors = np.zeros(dtype=np.float32, shape=(len(mesh.verts), 4))
-vert_colors[:, 3] = 1
+vert_colors = np.zeros(dtype=np.float32, shape=(len(mesh.verts), 3))
 ma = arr.max()
 for i in range(vert_colors.shape[0]):
-    vert_colors[i, :3] = sample(arr[i] / ma)
+    vert_colors[i] = sample(arr[i] / ma)
 
-ms = pymeshlab.MeshSet()
-ms.add_mesh(pymeshlab.Mesh(vertex_matrix=mesh.verts.x.to_numpy(), 
-                           face_matrix=indices.to_numpy(), 
-                           v_color_matrix=vert_colors))
-ms.save_current_mesh(args.output)
+x_np = mesh.verts.x.to_numpy()
+indices_np = indices.to_numpy()
+
+with open(args.output, "w") as output:
+    for i in range(len(mesh.verts)):
+        output.write(f"v {x_np[i, 0]} {x_np[i, 1]} {x_np[i, 2]} {vert_colors[i, 0]} {vert_colors[i, 1]} {vert_colors[i, 2]}\n")
+    for i in range(len (mesh.faces)):
+        output.write(f"f {indices_np[i, 0]+1} {indices_np[i, 1]+1} {indices_np[i, 2]+1}\n")

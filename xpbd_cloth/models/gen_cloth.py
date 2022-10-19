@@ -1,7 +1,6 @@
 import numpy as np
 from Delaunator import Delaunator
 import time
-import pymeshlab
 
 start_x = 0.25
 start_y = 0.25
@@ -43,8 +42,8 @@ for h_i in range(cloth_num):
       for i in range(_triangles.shape[0]):
         faces.append([_triangles[i][0]+off, _triangles[i][1]+off, _triangles[i][2]+off])
 
-ms = pymeshlab.MeshSet()
-ms.add_mesh(pymeshlab.Mesh(points, faces))
-ms.meshing_remove_unreferenced_vertices()
-ms.save_current_mesh("models/cloth10x10.obj")
-ms.clear()
+with open("models/cloth10x10.obj", "w") as output:
+    for point in points:
+        output.write(f"v {point[0]} {point[1]} {point[2]}\n")
+    for face in faces:
+        output.write(f"f {face[0]+1} {face[1]+1} {face[2]+1}\n")

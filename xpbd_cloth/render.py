@@ -1,5 +1,4 @@
 import taichi as ti
-import pymeshlab
 
 def initScene(position, lookat, show_window=True):
     global __show_window
@@ -36,10 +35,11 @@ def renderScene(solver, frame):
     return window.running
 
 def exportScene(solver, frame, output):
-    pos = solver.mesh.verts.x.to_numpy()
-    indices = solver.indices.to_numpy().reshape(-1, 3)
-    ms = pymeshlab.MeshSet()
-    ms.add_mesh(pymeshlab.Mesh(pos, indices))
-    ms.meshing_remove_unreferenced_vertices()
-    ms.save_current_mesh(f'{output}/model_{frame}.obj')
-    ms.clear()
+    x_np = solver.mesh.verts.x.to_numpy()
+    indices_np = solver.indices.to_numpy().reshape(-1, 3)
+
+    with open(f'{output}/model_{frame}.obj', "w") as output:
+        for i in range(len(solver.mesh.verts)):
+            output.write(f"v {x_np[i, 0]} {x_np[i, 1]} {x_np[i, 2]}\n")
+        for i in range(len (solver.mesh.faces)):
+            output.write(f"f {indices_np[i, 0]+1} {indices_np[i, 1]+1} {indices_np[i, 2]+1}\n")
