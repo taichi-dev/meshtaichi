@@ -137,7 +137,7 @@ We test MeshTaichi on a variety of physically-based simulation and geometry proc
 ### Install the latest Taichi first.
 Install the latest Taichi and meshtaichi extension by:
 ```
-python3 -m pip install —U taichi meshtaichi_patcher
+python3 -m pip install -U taichi meshtaichi_patcher
 ```
 
 ### Mass Spring (Section 8.1)
