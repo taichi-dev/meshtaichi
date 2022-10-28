@@ -3,11 +3,15 @@ import subprocess, argparse, os
 parser = argparse.ArgumentParser()
 parser.add_argument('--arch', default='gpu')
 parser.add_argument('--quiet', '-q', action='store_true')
+parser.add_argument('--ignore', nargs='*', default=[])
 args = parser.parse_args()
 
 fd = os.path.split(os.path.abspath(__file__))[0]
 
 def run_test(testfn):
+    for s in args.ignore:
+        if s in testfn:
+            return
     td, tn = os.path.split(testfn)
     test_folder = os.path.join(fd, td)
     res = subprocess.run(f'cd {test_folder}; python3 {tn} --test --arch {args.arch}', shell=True, capture_output=args.quiet)
