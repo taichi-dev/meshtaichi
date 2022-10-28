@@ -191,8 +191,9 @@ if args.test:
     for frame in range(100):
         newton()
     arr = x.to_numpy()
-    assert abs(arr.mean() - 0.50) < 1e-2
-    assert abs((arr**2).mean() - 0.28) < 1e-2
+    print(arr.mean(), (arr**2).mean())
+    assert abs(arr.mean() - 0.50) < 2e-2
+    assert abs((arr**2).mean() - 0.287) < 2e-2
     exit(0)
 
 window = ti.ui.Window("Projective Dynamics", (1024, 768))
