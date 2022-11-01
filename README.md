@@ -199,14 +199,22 @@ cd geodesic_distance && python3 geodesic.py --model models/yog.obj --output colo
 ```
 
 ## Bibtex
-```
-@article{yu2022meshtaichi,
-  title={MeshTaichi: A Compiler for Efficient Mesh-based Operations},
-  author={Yu, Chang and Xu, Yi and Kuang, Ye and Hu, Yuanming and Liu, Tiantian},
-  journal={ACM Transactions on Graphics (TOG)},
-  volume={41},
-  number={6},
-  year={2022},
-  publisher={ACM}
+```bibtex
+@article{Yu2022MeshTaichi,
+    title = {MeshTaichi: A Compiler for Efficient Mesh-based Operations},
+    author = {Yu, Chang and Xu, Yi and Kuang, Ye and Hu, Yuanming and Liu, Tiantian},
+    journal = {ACM Transactions on Graphics (TOG)},
+    volume = {41},
+    number = {6},
+    year = {2022},
+    issue_date = {December 2022},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    issn = {0730-0301},
+    url = {https://doi.org/10.1145/3550454.3555430},
+    doi = {10.1145/3550454.3555430},
+    month = {dec},
+    articleno = {252},
+    numpages = {18}
 }
 ```
