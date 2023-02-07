@@ -27,7 +27,7 @@ We need to define mesh data structures before applying them to computations. We 
 
 ```python
 import taichi as ti
-import meshtaichi as Patcher
+import meshtaichi_patcher as Patcher
 # load model file 'bunny.mesh' as tetrahedron mesh and initialize Cell-Vertex relation.
 mesh = Patcher.load_mesh("bunny.mesh", relations=["CV"])
 ```
