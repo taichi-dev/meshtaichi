@@ -14,7 +14,11 @@ Meshes are an indispensable representation in many graphics applications because
 
 ## **Installation**
 
-`python3 -m pip install -U meshtaichi_patcher`
+Install the latest Taichi and meshtaichi extension by:
+
+```shell
+python3 -m pip install -U taichi meshtaichi_patcher
+```
 
 ## **Usage**
 
@@ -137,14 +141,6 @@ pos_ex.copy_from(mesh.verts.pos)
 We test MeshTaichi on a variety of physically-based simulation and geometry processing applications with both triangle and tetrahedron meshes. MeshTaichi achieves a consistent speedup ranging from 1.4× to 6×, compared to state-of-the-art mesh data structures and compilers.
 
 ## How to run
-
-### Install the latest Taichi first
-
-Install the latest Taichi and meshtaichi extension by:
-
-```
-python3 -m pip install -U taichi meshtaichi_patcher
-```
 
 ### Mass Spring (Section 8.1)
 
