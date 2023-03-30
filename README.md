@@ -6,15 +6,19 @@
 
 [[Paper]](https://changyu.io/papers/yu2022meshtaichi.pdf) [[Video]](https://www.youtube.com/watch?v=vjBrk7k8SPE) [[Full Talk]](https://www.youtube.com/watch?v=ISSyVKOfS4o)
 
-The MeshTaichi framework is now officially part of [Taichi](https://github.com/taichi-dev/taichi). This repo only contains examples.
+The MeshTaichi framework is now officially part of [Taichi](https://github.com/taichi-dev/taichi) and can be installed by `pip`. This repo only contains examples.
 
 ### **A mesh compiler that provides an intuitive programming model for efficient mesh-based operations**
-Meshes are an indispensable representation in many graphics applications because they provide conformal spatial discretizations. However, mesh-based operations are often slow due to unstructured memory access patterns. We propose MeshTaichi, a novel mesh compiler that provides an intuitive programming model for efficient mesh-based operations. Our programming model hides the complex indexing system from users and allows users to write mesh-based operations using reference-style neighborhood queries. Our compiler achieves its high performance by exploiting data locality. We partition input meshes and prepare the wanted relations by inspecting users’ code during compile time. During run time, we further utilize on-chip memory (shared memory on GPU and L1 cache on CPU) to access the wanted attributes of mesh elements efficiently. Our compiler decouples low-level optimization options with computations, so that users can explore different localized data attributes and different memory orderings without changing their computation code. As a result, users can write concise code using our programming model to generate efficient mesh-based computations on both CPU and GPU backends. 
+
+Meshes are an indispensable representation in many graphics applications because they provide conformal spatial discretizations. However, mesh-based operations are often slow due to unstructured memory access patterns. We propose MeshTaichi, a novel mesh compiler that provides an intuitive programming model for efficient mesh-based operations. Our programming model hides the complex indexing system from users and allows users to write mesh-based operations using reference-style neighborhood queries. Our compiler achieves its high performance by exploiting data locality. We partition input meshes and prepare the wanted relations by inspecting users’ code during compile time. During run time, we further utilize on-chip memory (shared memory on GPU and L1 cache on CPU) to access the wanted attributes of mesh elements efficiently. Our compiler decouples low-level optimization options with computations, so that users can explore different localized data attributes and different memory orderings without changing their computation code. As a result, users can write concise code using our programming model to generate efficient mesh-based computations on both CPU and GPU backends.
+
+## **Installation**
+
+`python3 -m pip install -U meshtaichi_patcher`
 
 ## **Usage**
 
 We demonstrate the usage of MeshTaichi using an explicit finite element method example with the Neo-Hookean model following the course note [[Sifakis and Barbic 2012]](http://viterbi-web.usc.edu/~jbarbic/femdefo/). The First Piola-Kirchhoff stress tensor is given as:
-
 
 ![](http://latex.codecogs.com/svg.latex?P(F)=\\mu\\left(F-F^{-T}\\right)+\\lambda\\log(J)F^{-T}) (Eq.1)
 
@@ -134,8 +138,10 @@ We test MeshTaichi on a variety of physically-based simulation and geometry proc
 
 ## How to run
 
-### Install the latest Taichi first.
+### Install the latest Taichi first
+
 Install the latest Taichi and meshtaichi extension by:
+
 ```
 python3 -m pip install -U taichi meshtaichi_patcher
 ```
@@ -145,6 +151,7 @@ python3 -m pip install -U taichi meshtaichi_patcher
 ![ms_pic](./pics/ms_teaser.jpg)
 
 To reproduce the mass-spring system:
+
 ``` bash
 cd mass_spring && python3 ms.py --model models/armadillo0.1.node --arch [cpu/cuda]
 ```
@@ -156,6 +163,7 @@ For more details, please refer to this [documentation](mass_spring/README.md).
 ![pd_pic](./pics/pd_teaser.jpg)
 
 To reproduce the projective dynamics:
+
 ``` bash
 cd projective_dynamics && python3 pd.py --model models/deer.1.node --arch [cpu/cuda]
 ```
@@ -167,6 +175,7 @@ For more details, please refer to this [documentation](projective_dynamics/READM
 ![xpbd_pic](./pics/xpbd_teaser.jpg)
 
 To reproduce the XPBD cloth simulation:
+
 ``` bash
 cd xpbd_cloth && python3 models/gen_cloth.py && mkdir results && python3 run_multiple.py --output ./results  --arch [cpu/cuda]
 ```
@@ -178,6 +187,7 @@ For more details, please refer to this [documentation](xpbd_cloth/README.md).
 ![mpm_pic](./pics/mpm_teaser.jpg)
 
 To reproduce the mesh-grid hybrid simulation:
+
 ``` bash
 cd lag_mpm && mkdir results && python3 run.py --output ./results && python3 render_particles.py
 ```
@@ -187,6 +197,7 @@ For more details, please refer to this [documentation](lag_mpm/README.md).
 ### Vertex Normal (Section 8.2)
 
 To reproduce the vertex normal:
+
 ``` bash
 cd vertex_normal && python3 normal.py --model models/bunny.obj --arch [cpu/cuda]
 ```
@@ -194,11 +205,13 @@ cd vertex_normal && python3 normal.py --model models/bunny.obj --arch [cpu/cuda]
 ### Geodesic Distance (Section 8.3)
 
 To reproduce the geodesic distance:
+
 ``` bash
 cd geodesic_distance && python3 geodesic.py --model models/yog.obj --output colored.obj --arch [cpu/cuda]
 ```
 
 ## Bibtex
+
 ```bibtex
 @article{Yu2022MeshTaichi,
     title = {MeshTaichi: A Compiler for Efficient Mesh-based Operations},
