@@ -4,7 +4,7 @@
 
 ![](./pics/teaser.png)
 
-[[Paper]](https://changyu.io/papers/yu2022meshtaichi.pdf) [[Video]](https://www.youtube.com/watch?v=vjBrk7k8SPE) [[Full Talk]](https://www.youtube.com/watch?v=ISSyVKOfS4o)
+[[Paper]](https://tiantianliu.cn/papers/yu22meshtaichi/yu22meshtaichi.pdf) [[Video]](https://www.youtube.com/watch?v=vjBrk7k8SPE) [[Full Talk]](https://www.youtube.com/watch?v=ISSyVKOfS4o)
 
 The MeshTaichi framework is now officially part of [Taichi](https://github.com/taichi-dev/taichi) and can be installed by `pip`. This repo only contains examples.
 
